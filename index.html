@@ -1,16 +1,90 @@
-<body style="margin:0; padding:20px; text-align:center; background:white;">
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mandala</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 10px;
+      text-align: center;
+      background: white;
+      font-family: Arial, sans-serif;
+    }
+    #toolbar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    button, input[type=color] {
+      font-size: 18px;
+      padding: 6px;
+      cursor: pointer;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      max-width: 100%;
+      touch-action: none;
+    }
+  </style>
+</head>
 
-  <!-- Bouton imprimer -->
-  <div style="text-align:right; margin-bottom:10px;">
-    <button onclick="window.print()"
-            style="font-size:24px; background:none; border:none; cursor:pointer;"
-            title="Imprimer">
-      🖨️
-    </button>
+<body>
+
+  <!-- Barre d’outils -->
+  <div id="toolbar">
+    <input type="color" id="colorPicker" value="#ff0000">
+    <button id="brush">✏️</button>
+    <button id="eraser">🧽</button>
+    <button onclick="window.print()">🖨️</button>
   </div>
 
-  <!-- Mandala -->
-  <img src="mandala.png" alt="Mandala"
-       style="max-width:100%; height:auto;">
+  <!-- Canvas -->
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const img = new Image();
+    img.src = "mandala.png";
+
+    let drawing = false;
+    let erasing = false;
+    let color = document.getElementById("colorPicker").value;
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+    };
+
+    canvas.addEventListener("pointerdown", () => drawing = true);
+    canvas.addEventListener("pointerup", () => drawing = false);
+    canvas.addEventListener("pointerleave", () => drawing = false);
+
+    canvas.addEventListener("pointermove", (e) => {
+      if (!drawing) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = erasing ? "white" : color;
+      ctx.fill();
+    });
+
+    document.getElementById("colorPicker").addEventListener("change", e => {
+      color = e.target.value;
+      erasing = false;
+    });
+
+    document.getElementById("brush").onclick = () => erasing = false;
+    document.getElementById("eraser").onclick = () => erasing = true;
+  </script>
 
 </body>
+</html>

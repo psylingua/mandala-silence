@@ -1,83 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mandala</title>
 
   <style>
-    body {
-      margin: 0;
-      padding: 10px;
-      text-align: center;
-      background: white;
+    body{
+      margin:0;
+      padding:12px;
+      background:#fff;
       font-family: Arial, sans-serif;
+      text-align:center;
     }
 
-    #toolbar {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 10px;
+    #toolbar{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin-bottom:10px;
     }
 
-    button, input[type=color] {
-      font-size: 18px;
-      padding: 6px;
-      cursor: pointer;
+    button, input[type=color]{
+      font-size:18px;
+      padding:6px 10px;
+      cursor:pointer;
     }
 
-    #container {
-      position: relative;
-      display: inline-block;
+    /* Le conteneur DOIT avoir une taille */
+    #container{
+      position:relative;
+      display:inline-block; /* se cale sur la taille donnée en JS */
+      background:#fff;
     }
 
-    canvas {
-      position: absolute;
-      left: 0;
-      top: 0;
-      max-width: 100%;
-      touch-action: none;
+    canvas{
+      display:block;          /* évite des bugs d’affichage */
+      touch-action:none;
+    }
+
+    /* Le mandala en dessous */
+    #mandalaCanvas{
+      position:relative;
+      z-index:1;
+    }
+
+    /* Le dessin au-dessus */
+    #drawCanvas{
+      position:absolute;
+      left:0; top:0;
+      z-index:2;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Barre d’outils -->
   <div id="toolbar">
-    <input type="color" id="colorPicker" value="#ff0000">
-    <button id="brush">✏️</button>
-    <button id="eraser">🧽</button>
-    <button onclick="window.print()">🖨️</button>
+    <input type="color" id="colorPicker" value="#ff0000" />
+    <button id="brush" title="Pinceau">✏️</button>
+    <button id="eraser" title="Gomme">🧽</button>
+    <button onclick="window.print()" title="Imprimer">🖨️</button>
   </div>
 
-  <!-- Zone mandala -->
   <div id="container">
     <canvas id="mandalaCanvas"></canvas>
     <canvas id="drawCanvas"></canvas>
   </div>
 
   <script>
+    const container = document.getElementById("container");
     const mandalaCanvas = document.getElementById("mandalaCanvas");
     const drawCanvas = document.getElementById("drawCanvas");
     const mandalaCtx = mandalaCanvas.getContext("2d");
     const drawCtx = drawCanvas.getContext("2d");
+
+    const colorPicker = document.getElementById("colorPicker");
 
     const img = new Image();
     img.src = "mandala.png";
 
     let drawing = false;
     let erasing = false;
-    let color = document.getElementById("colorPicker").value;
-    let brushSize = 4; // pinceau FIN
+    let color = colorPicker.value;
+    let brushSize = 3; // plus fin
 
     img.onload = () => {
+      // 1) taille interne des canvases (résolution)
       mandalaCanvas.width = drawCanvas.width = img.width;
       mandalaCanvas.height = drawCanvas.height = img.height;
+
+      // 2) taille du conteneur (sinon tout s’écrase)
+      container.style.width = img.width + "px";
+      container.style.height = img.height + "px";
+
+      // 3) dessiner le mandala sur le canvas du bas
+      mandalaCtx.clearRect(0,0,img.width,img.height);
       mandalaCtx.drawImage(img, 0, 0);
     };
 
-    function getPos(e) {
+    function getPos(e){
       const rect = drawCanvas.getBoundingClientRect();
       return {
         x: (e.clientX - rect.left) * (drawCanvas.width / rect.width),
@@ -85,22 +107,24 @@
       };
     }
 
-    drawCanvas.addEventListener("pointerdown", () => drawing = true);
+    drawCanvas.addEventListener("pointerdown", (e) => {
+      drawing = true;
+      drawCanvas.setPointerCapture(e.pointerId);
+    });
+
     drawCanvas.addEventListener("pointerup", () => drawing = false);
     drawCanvas.addEventListener("pointerleave", () => drawing = false);
 
     drawCanvas.addEventListener("pointermove", (e) => {
-      if (!drawing) return;
-
-      const { x, y } = getPos(e);
-
+      if(!drawing) return;
+      const {x,y} = getPos(e);
       drawCtx.beginPath();
-      drawCtx.arc(x, y, brushSize, 0, Math.PI * 2);
-      drawCtx.fillStyle = erasing ? "white" : color;
+      drawCtx.arc(x, y, brushSize, 0, Math.PI*2);
+      drawCtx.fillStyle = erasing ? "#ffffff" : color;
       drawCtx.fill();
     });
 
-    document.getElementById("colorPicker").addEventListener("change", e => {
+    colorPicker.addEventListener("change", (e) => {
       color = e.target.value;
       erasing = false;
     });

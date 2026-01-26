@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Mandala</title>
+
   <style>
     body {
       margin: 0;
@@ -11,19 +12,29 @@
       background: white;
       font-family: Arial, sans-serif;
     }
+
     #toolbar {
       display: flex;
       justify-content: center;
       gap: 10px;
       margin-bottom: 10px;
     }
+
     button, input[type=color] {
       font-size: 18px;
       padding: 6px;
       cursor: pointer;
     }
+
+    #container {
+      position: relative;
+      display: inline-block;
+    }
+
     canvas {
-      border: 1px solid #ddd;
+      position: absolute;
+      left: 0;
+      top: 0;
       max-width: 100%;
       touch-action: none;
     }
@@ -40,12 +51,17 @@
     <button onclick="window.print()">🖨️</button>
   </div>
 
-  <!-- Canvas -->
-  <canvas id="canvas"></canvas>
+  <!-- Zone mandala -->
+  <div id="container">
+    <canvas id="mandalaCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+  </div>
 
   <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
+    const mandalaCanvas = document.getElementById("mandalaCanvas");
+    const drawCanvas = document.getElementById("drawCanvas");
+    const mandalaCtx = mandalaCanvas.getContext("2d");
+    const drawCtx = drawCanvas.getContext("2d");
 
     const img = new Image();
     img.src = "mandala.png";
@@ -53,28 +69,35 @@
     let drawing = false;
     let erasing = false;
     let color = document.getElementById("colorPicker").value;
+    let brushSize = 4; // pinceau FIN
 
     img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+      mandalaCanvas.width = drawCanvas.width = img.width;
+      mandalaCanvas.height = drawCanvas.height = img.height;
+      mandalaCtx.drawImage(img, 0, 0);
     };
 
-    canvas.addEventListener("pointerdown", () => drawing = true);
-    canvas.addEventListener("pointerup", () => drawing = false);
-    canvas.addEventListener("pointerleave", () => drawing = false);
+    function getPos(e) {
+      const rect = drawCanvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (drawCanvas.width / rect.width),
+        y: (e.clientY - rect.top) * (drawCanvas.height / rect.height)
+      };
+    }
 
-    canvas.addEventListener("pointermove", (e) => {
+    drawCanvas.addEventListener("pointerdown", () => drawing = true);
+    drawCanvas.addEventListener("pointerup", () => drawing = false);
+    drawCanvas.addEventListener("pointerleave", () => drawing = false);
+
+    drawCanvas.addEventListener("pointermove", (e) => {
       if (!drawing) return;
 
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const { x, y } = getPos(e);
 
-      ctx.beginPath();
-      ctx.arc(x, y, 8, 0, Math.PI * 2);
-      ctx.fillStyle = erasing ? "white" : color;
-      ctx.fill();
+      drawCtx.beginPath();
+      drawCtx.arc(x, y, brushSize, 0, Math.PI * 2);
+      drawCtx.fillStyle = erasing ? "white" : color;
+      drawCtx.fill();
     });
 
     document.getElementById("colorPicker").addEventListener("change", e => {

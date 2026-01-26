@@ -23,17 +23,32 @@
       flex-wrap:wrap;
     }
 
-    button, input[type=color]{
-      font-size:18px;
+    /* Boutons outils (sans rectangle visible) */
+    button{
+      font-size:22px;
       padding:6px 10px;
       cursor:pointer;
-      background:#fff;
-      border:1px solid #ddd;
+      background:none;
+      border:none;
       border-radius:8px;
     }
 
+    button:hover{
+      background:#f2f2f2;
+    }
+
     button.active{
-      border:2px solid #333;
+      outline:2px solid #333;
+    }
+
+    /* Sélecteur de couleur */
+    input[type=color]{
+      width:40px;
+      height:40px;
+      border:none;
+      padding:0;
+      background:none;
+      cursor:pointer;
     }
 
     #container{
@@ -56,7 +71,8 @@
 
     #drawCanvas{
       position:absolute;
-      left:0; top:0;
+      left:0;
+      top:0;
       z-index:2;
     }
   </style>
@@ -64,6 +80,7 @@
 
 <body>
 
+  <!-- Barre d’outils -->
   <div id="toolbar">
     <input type="color" id="colorPicker" value="#ff0000" />
 
@@ -75,18 +92,19 @@
     <button onclick="window.print()" title="Imprimer">🖨️</button>
   </div>
 
+  <!-- Zone de dessin -->
   <div id="container">
     <canvas id="mandalaCanvas"></canvas>
     <canvas id="drawCanvas"></canvas>
   </div>
 
   <script>
-    // --- éléments ---
     const container = document.getElementById("container");
     const mandalaCanvas = document.getElementById("mandalaCanvas");
     const drawCanvas = document.getElementById("drawCanvas");
     const mandalaCtx = mandalaCanvas.getContext("2d");
     const drawCtx = drawCanvas.getContext("2d");
+
     const colorPicker = document.getElementById("colorPicker");
 
     const btnBrush  = document.getElementById("toolBrush");
@@ -94,19 +112,16 @@
     const btnEraser = document.getElementById("toolEraser");
     const btnClear  = document.getElementById("clearAll");
 
-    // --- image mandala ---
     const img = new Image();
     img.src = "mandala.png";
 
-    // --- états ---
-    let tool = "brush"; // brush | bucket | eraser
+    let tool = "brush";
     let drawing = false;
     let color = colorPicker.value;
 
-    let brushSize = 3;   // pinceau fin
-    let eraserSize = 10; // gomme plus large
+    let brushSize = 3;
+    let eraserSize = 10;
 
-    // --- init mandala ---
     img.onload = () => {
       mandalaCanvas.width = drawCanvas.width = img.width;
       mandalaCanvas.height = drawCanvas.height = img.height;
@@ -114,11 +129,9 @@
       container.style.width = img.width + "px";
       container.style.height = img.height + "px";
 
-      mandalaCtx.clearRect(0, 0, img.width, img.height);
       mandalaCtx.drawImage(img, 0, 0);
     };
 
-    // --- helpers ---
     function setActiveButton(){
       [btnBrush, btnBucket, btnEraser].forEach(b => b.classList.remove("active"));
       if(tool === "brush") btnBrush.classList.add("active");
@@ -134,7 +147,7 @@
       };
     }
 
-    colorPicker.addEventListener("change", (e) => {
+    colorPicker.addEventListener("change", e => {
       color = e.target.value;
     });
 
@@ -146,24 +159,20 @@
       drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
     };
 
-    // --- dessin au pinceau + gomme (transparence) ---
     function dab(x, y){
       const size = (tool === "eraser") ? eraserSize : brushSize;
 
       drawCtx.save();
+      drawCtx.globalCompositeOperation =
+        (tool === "eraser") ? "destination-out" : "source-over";
 
-      // gomme = transparence (n’attaque jamais le mandala)
-      drawCtx.globalCompositeOperation = (tool === "eraser") ? "destination-out" : "source-over";
       drawCtx.fillStyle = color;
-
       drawCtx.beginPath();
       drawCtx.arc(x, y, size, 0, Math.PI * 2);
       drawCtx.fill();
-
       drawCtx.restore();
     }
 
-    // --- pot de peinture (flood fill) sur la couche de dessin uniquement ---
     function hexToRgba(hex){
       const h = hex.replace("#", "");
       const bigint = parseInt(h, 16);
@@ -175,65 +184,39 @@
       };
     }
 
-    function matchColor(data, idx, target){
-      return (
-        data[idx]     === target.r &&
-        data[idx + 1] === target.g &&
-        data[idx + 2] === target.b &&
-        data[idx + 3] === target.a
-      );
-    }
-
-    function setColor(data, idx, fill){
-      data[idx]     = fill.r;
-      data[idx + 1] = fill.g;
-      data[idx + 2] = fill.b;
-      data[idx + 3] = fill.a;
-    }
-
-    function getColorAt(data, idx){
-      return { r:data[idx], g:data[idx+1], b:data[idx+2], a:data[idx+3] };
-    }
-
     function floodFill(startX, startY, fillHex){
-      // On lit une "image composite" = mandala + dessins existants,
-      // mais on écrit uniquement sur drawCanvas (important)
       const w = drawCanvas.width;
       const h = drawCanvas.height;
 
-      // 1) récupérer l’état actuel du dessin (pour écrire)
       const drawImage = drawCtx.getImageData(0, 0, w, h);
       const drawData = drawImage.data;
 
-      // 2) récupérer la couleur "visible" au point cliqué (mandala + dessin)
-      //    -> on dessine temporairement dans un canvas virtuel pour lire le pixel
       const temp = document.createElement("canvas");
-      temp.width = w; temp.height = h;
+      temp.width = w;
+      temp.height = h;
       const tctx = temp.getContext("2d");
       tctx.drawImage(mandalaCanvas, 0, 0);
       tctx.drawImage(drawCanvas, 0, 0);
       const visible = tctx.getImageData(0, 0, w, h).data;
 
-      const startIdx = (startY * w + startX) * 4;
-      const target = getColorAt(visible, startIdx);
+      const idx0 = (startY * w + startX) * 4;
+      const target = {
+        r: visible[idx0],
+        g: visible[idx0 + 1],
+        b: visible[idx0 + 2]
+      };
       const fill = hexToRgba(fillHex);
 
-      // Si on clique sur une zone déjà de la même couleur, on ne fait rien
-      if(target.r === fill.r && target.g === fill.g && target.b === fill.b) return;
-
-      // Tolérance : plus c’est petit, plus ça respecte les bords.
-      // (On peut ajuster plus tard)
       const tol = 18;
 
-      function closeTo(a, b){
+      function closeTo(c){
         return (
-          Math.abs(a.r - b.r) <= tol &&
-          Math.abs(a.g - b.g) <= tol &&
-          Math.abs(a.b - b.b) <= tol
+          Math.abs(c.r - target.r) <= tol &&
+          Math.abs(c.g - target.g) <= tol &&
+          Math.abs(c.b - target.b) <= tol
         );
       }
 
-      // BFS pile
       const stack = [[startX, startY]];
       const visited = new Uint8Array(w * h);
 
@@ -245,27 +228,26 @@
         if(visited[p]) continue;
         visited[p] = 1;
 
-        const idx = p * 4;
+        const i = p * 4;
+        const c = { r: visible[i], g: visible[i+1], b: visible[i+2] };
+        if(!closeTo(c)) continue;
 
-        // On compare avec la couleur visible (pour respecter les limites du mandala)
-        const current = { r: visible[idx], g: visible[idx+1], b: visible[idx+2], a: visible[idx+3] };
-        if(!closeTo(current, target)) continue;
+        drawData[i] = fill.r;
+        drawData[i+1] = fill.g;
+        drawData[i+2] = fill.b;
+        drawData[i+3] = 255;
 
-        // On remplit sur le drawCanvas seulement
-        setColor(drawData, idx, fill);
-
-        stack.push([x+1, y]);
-        stack.push([x-1, y]);
-        stack.push([x, y+1]);
-        stack.push([x, y-1]);
+        stack.push([x+1,y]);
+        stack.push([x-1,y]);
+        stack.push([x,y+1]);
+        stack.push([x,y-1]);
       }
 
       drawCtx.putImageData(drawImage, 0, 0);
     }
 
-    // --- événements ---
-    drawCanvas.addEventListener("pointerdown", (e) => {
-      const {x, y} = getPos(e);
+    drawCanvas.addEventListener("pointerdown", e => {
+      const {x,y} = getPos(e);
 
       if(tool === "bucket"){
         floodFill(x, y, color);
@@ -280,9 +262,9 @@
     drawCanvas.addEventListener("pointerup", () => drawing = false);
     drawCanvas.addEventListener("pointerleave", () => drawing = false);
 
-    drawCanvas.addEventListener("pointermove", (e) => {
+    drawCanvas.addEventListener("pointermove", e => {
       if(!drawing) return;
-      const {x, y} = getPos(e);
+      const {x,y} = getPos(e);
       dab(x, y);
     });
 

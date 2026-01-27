@@ -23,7 +23,6 @@
       flex-wrap:wrap;
     }
 
-    /* Boutons outils (sans rectangle visible) */
     button{
       font-size:22px;
       padding:6px 10px;
@@ -41,7 +40,6 @@
       outline:2px solid #333;
     }
 
-    /* Sélecteur de couleur */
     input[type=color]{
       width:40px;
       height:40px;
@@ -82,14 +80,24 @@
 
   <!-- Barre d’outils -->
   <div id="toolbar">
-    <input type="color" id="colorPicker" value="#ff0000" />
+    <input type="color" id="colorPicker" value="#ff0000"
+      title="Choisir une couleur&#10;Elegir un color&#10;Choose a color" />
 
-    <button id="toolBrush" class="active" title="Pinceau">✏️</button>
-    <button id="toolBucket" title="Pot de peinture">🪣</button>
-    <button id="toolEraser" title="Gomme">🧽</button>
+    <button id="toolBrush" class="active"
+      title="Pinceau&#10;Pincel&#10;Brush">✏️</button>
 
-    <button id="clearAll" title="Tout effacer">🧹</button>
-    <button onclick="window.print()" title="Imprimer">🖨️</button>
+    <!-- 🎨 = pot de peinture (solution A) -->
+    <button id="toolBucket"
+      title="Pot de peinture&#10;Cubo de pintura&#10;Paint bucket">🎨</button>
+
+    <button id="toolEraser"
+      title="Gomme&#10;Borrador&#10;Eraser">🧽</button>
+
+    <button id="clearAll"
+      title="Tout effacer&#10;Borrar todo&#10;Clear all">🧹</button>
+
+    <button onclick="window.print()"
+      title="Imprimer&#10;Imprimir&#10;Print">🖨️</button>
   </div>
 
   <!-- Zone de dessin -->

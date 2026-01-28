@@ -86,27 +86,35 @@
   <div class="wrap">
 
     <div class="toolbar">
-      <input class="color-input" type="color" id="colorPicker" value="#ff3b30" title="Couleur / Color"/>
+      <!-- Couleur libre -->
+      <input
+        class="color-input"
+        type="color"
+        id="colorPicker"
+        value="#ff3b30"
+        title="Couleur / Color / Color"
+      />
 
-      <div class="swatches" title="Couleurs rapides / Quick colors">
-        <div class="swatch" data-c="#ff3b30" style="background:#ff3b30"></div>
-        <div class="swatch" data-c="#ff9500" style="background:#ff9500"></div>
-        <div class="swatch" data-c="#ffcc00" style="background:#ffcc00"></div>
-        <div class="swatch" data-c="#34c759" style="background:#34c759"></div>
-        <div class="swatch" data-c="#007aff" style="background:#007aff"></div>
-        <div class="swatch" data-c="#af52de" style="background:#af52de"></div>
-        <div class="swatch" data-c="#000000" style="background:#000000"></div>
+      <!-- Couleurs rapides -->
+      <div class="swatches" title="Couleurs rapides / Colores rápidos / Quick colors">
+        <div class="swatch" data-c="#ff3b30" style="background:#ff3b30" title="Rouge / Rojo / Red"></div>
+        <div class="swatch" data-c="#ff9500" style="background:#ff9500" title="Orange / Naranja / Orange"></div>
+        <div class="swatch" data-c="#ffcc00" style="background:#ffcc00" title="Jaune / Amarillo / Yellow"></div>
+        <div class="swatch" data-c="#34c759" style="background:#34c759" title="Vert / Verde / Green"></div>
+        <div class="swatch" data-c="#007aff" style="background:#007aff" title="Bleu / Azul / Blue"></div>
+        <div class="swatch" data-c="#af52de" style="background:#af52de" title="Violet / Morado / Purple"></div>
+        <div class="swatch" data-c="#000000" style="background:#000000" title="Noir / Negro / Black"></div>
       </div>
 
       <!-- Pinceau -->
-      <button class="btn active" id="btnBrush" title="Pinceau / Brush">
+      <button class="btn active" id="btnBrush" title="Pinceau / Pincel / Brush">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M3 21c3.5 0 6-2 6-5 0-1.1.9-2 2-2h1l9-9-3-3-9 9v1c0 1.1-.9 2-2 2-3 0-5 2.5-5 6z" fill="#111"/>
         </svg>
       </button>
 
       <!-- Pot -->
-      <button class="btn" id="btnFill" title="Pot de peinture / Fill">
+      <button class="btn" id="btnFill" title="Pot de peinture / Cubo / Bucket">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 3h10v6H7V3z" fill="#111"/>
           <path d="M9 9h6l3 11H6L9 9z" fill="#111"/>
@@ -115,7 +123,7 @@
       </button>
 
       <!-- Gomme -->
-      <button class="btn" id="btnEraser" title="Gomme / Eraser">
+      <button class="btn" id="btnEraser" title="Gomme / Goma / Eraser">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M16 3l5 5-10 10H6l-3-3 13-12z" fill="#111"/>
           <path d="M6 18h15v3H6v-3z" fill="#111"/>
@@ -123,7 +131,7 @@
       </button>
 
       <!-- Tout effacer -->
-      <button class="btn" id="btnClear" title="Tout effacer / Clear all">
+      <button class="btn" id="btnClear" title="Tout effacer / Borrar todo / Clear all">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 6h10l-1 16H8L7 6z" fill="#111"/>
           <path d="M9 4h6l1 2H8l1-2z" fill="#111"/>
@@ -131,7 +139,7 @@
       </button>
 
       <!-- Imprimer -->
-      <button class="btn" id="btnPrint" title="Imprimer / Print">
+      <button class="btn" id="btnPrint" title="Imprimer / Imprimir / Print">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 8V3h10v5H7z" fill="#111"/>
           <path d="M6 9h12a3 3 0 013 3v5h-4v4H7v-4H3v-5a3 3 0 013-3z" fill="#111"/>

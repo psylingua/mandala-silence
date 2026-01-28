@@ -7,111 +7,77 @@
 
   <style>
     :root{
-      --ui-gap: 10px;
-      --ui-btn: 42px;
-      --ui-radius: 10px;
-      --ui-border: #cfcfcf;
+      --gap:10px;
+      --btn:42px;
+      --radius:10px;
+      --border:#cfcfcf;
     }
-
-    body{
-      margin:0;
-      background:#fff;
-      font-family: Arial, sans-serif;
-    }
-
-    /* Conteneur global : on réduit un peu la taille affichée */
+    body{ margin:0; background:#fff; font-family: Arial, sans-serif; }
     .wrap{
-      width: 100%;
-      max-width: 980px;          /* ⬅️ réduit vs avant */
-      margin: 0 auto;
-      padding: 10px 10px 14px;
-      box-sizing: border-box;
+      width:100%;
+      max-width:980px;
+      margin:0 auto;
+      padding:10px 10px 14px;
+      box-sizing:border-box;
       text-align:center;
     }
-
-    /* Barre d’outils */
     .toolbar{
       display:flex;
       align-items:center;
       justify-content:center;
-      gap: var(--ui-gap);
-      flex-wrap: wrap;
-      margin: 6px auto 10px;
+      gap:var(--gap);
+      flex-wrap:wrap;
+      margin:6px auto 10px;
       user-select:none;
     }
-
     .color-input{
-      width: 54px;
-      height: var(--ui-btn);
-      border: 1px solid var(--ui-border);
-      border-radius: var(--ui-radius);
-      padding: 0;
-      background: #fff;
-      cursor:pointer;
+      width:54px; height:var(--btn);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:0; background:#fff; cursor:pointer;
     }
-
     .swatches{
-      display:flex;
-      gap: 8px;
-      align-items:center;
-      padding: 6px 10px;
-      border: 1px solid var(--ui-border);
-      border-radius: var(--ui-radius);
+      display:flex; gap:8px; align-items:center;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
       background:#fff;
     }
-
     .swatch{
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 1px solid #bbb;
+      width:22px; height:22px;
+      border-radius:50%;
+      border:1px solid #bbb;
       cursor:pointer;
     }
-
     .btn{
-      width: var(--ui-btn);
-      height: var(--ui-btn);
-      border: 1px solid var(--ui-border);
-      border-radius: var(--ui-radius);
-      background:#fff;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      width:var(--btn); height:var(--btn);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background:#fff; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
     }
-    .btn.active{
-      outline: 2px solid #111;
-      outline-offset: 1px;
-    }
-    .btn svg{
-      width: 22px;
-      height: 22px;
-      display:block;
-    }
+    .btn.active{ outline:2px solid #111; outline-offset:1px; }
+    .btn svg{ width:22px; height:22px; display:block; }
 
-    /* Zone de dessin */
     .stage{
-      width: 100%;
-      border: 1px solid #e6e6e6;
-      border-radius: 14px;
-      overflow: hidden;
-      background: #fff;
-    }
-
-    /* Empilement des 2 calques */
-    .canvas-stack{
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1000 / 650; /* ⬅️ taille logique (plus petite) */
+      width:100%;
+      border:1px solid #e6e6e6;
+      border-radius:14px;
+      overflow:hidden;
       background:#fff;
     }
-
+    .canvas-stack{
+      position:relative;
+      width:100%;
+      aspect-ratio: 1000 / 650;
+      background:#fff;
+    }
     canvas{
       position:absolute;
       inset:0;
       width:100%;
       height:100%;
-      touch-action: none;
+      touch-action:none;
     }
   </style>
 </head>
@@ -119,12 +85,9 @@
 <body>
   <div class="wrap">
 
-    <!-- OUTILS -->
     <div class="toolbar">
-      <!-- Palette principale -->
       <input class="color-input" type="color" id="colorPicker" value="#ff3b30" title="Couleur / Color"/>
 
-      <!-- Pastilles rapides -->
       <div class="swatches" title="Couleurs rapides / Quick colors">
         <div class="swatch" data-c="#ff3b30" style="background:#ff3b30"></div>
         <div class="swatch" data-c="#ff9500" style="background:#ff9500"></div>
@@ -142,7 +105,7 @@
         </svg>
       </button>
 
-      <!-- Pot de peinture -->
+      <!-- Pot -->
       <button class="btn" id="btnFill" title="Pot de peinture / Fill">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 3h10v6H7V3z" fill="#111"/>
@@ -159,6 +122,14 @@
         </svg>
       </button>
 
+      <!-- Tout effacer -->
+      <button class="btn" id="btnClear" title="Tout effacer / Clear all">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 6h10l-1 16H8L7 6z" fill="#111"/>
+          <path d="M9 4h6l1 2H8l1-2z" fill="#111"/>
+        </svg>
+      </button>
+
       <!-- Imprimer -->
       <button class="btn" id="btnPrint" title="Imprimer / Print">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -169,12 +140,9 @@
       </button>
     </div>
 
-    <!-- SCENE -->
     <div class="stage">
       <div class="canvas-stack">
-        <!-- Calque 1 : mandala -->
         <canvas id="baseCanvas"></canvas>
-        <!-- Calque 2 : coloriage (c’est celui qu’on efface / remplit) -->
         <canvas id="paintCanvas"></canvas>
       </div>
     </div>
@@ -183,50 +151,55 @@
 
 <script>
 (() => {
-  // --- Taille logique (un peu plus petite pour Genially) ---
-  const W = 1000;
-  const H = 650;
+  const W = 1000, H = 650;
 
   const baseCanvas = document.getElementById("baseCanvas");
   const paintCanvas = document.getElementById("paintCanvas");
   baseCanvas.width = paintCanvas.width = W;
   baseCanvas.height = paintCanvas.height = H;
 
-  const bctx = baseCanvas.getContext("2d");
+  const bctx = baseCanvas.getContext("2d", { willReadFrequently: true });
   const pctx = paintCanvas.getContext("2d", { willReadFrequently: true });
 
-  // UI
   const colorPicker = document.getElementById("colorPicker");
   const swatches = document.querySelectorAll(".swatch");
 
   const btnBrush = document.getElementById("btnBrush");
-  const btnFill = document.getElementById("btnFill");
-  const btnEraser = document.getElementById("btnEraser");
+  const btnFill  = document.getElementById("btnFill");
+  const btnEraser= document.getElementById("btnEraser");
+  const btnClear = document.getElementById("btnClear");
   const btnPrint = document.getElementById("btnPrint");
 
-  let tool = "brush"; // brush | fill | eraser
+  let tool = "brush";
   let drawing = false;
   let lastX = 0, lastY = 0;
-  let brushSize = 5;        // pinceau fin (nickel coloriage)
-  let eraserSize = 14;      // gomme confortable
 
-  // --- Mandala ---
+  const brushSize = 5;
+  const eraserSize = 14;
+
+  // --- Mandala + bbox ---
   const mandala = new Image();
   mandala.src = "mandala.png";
 
-  // On garde une copie des pixels du mandala pour que le pot respecte les traits
   let mandalaData = null;
+  let bbox = {x0:0,y0:0,x1:W-1,y1:H-1}; // zone dans laquelle le pot a le droit d’agir
 
   mandala.onload = () => {
-    // Dessine le mandala en "contain" dans le canvas de base
     bctx.clearRect(0,0,W,H);
-    bctx.fillStyle = "#fff";
+    bctx.fillStyle="#fff";
     bctx.fillRect(0,0,W,H);
 
-    const {dx, dy, dw, dh} = containFit(mandala.width, mandala.height, W, H);
-    bctx.drawImage(mandala, dx, dy, dw, dh);
+    const fit = containFit(mandala.width, mandala.height, W, H);
+    bctx.drawImage(mandala, fit.dx, fit.dy, fit.dw, fit.dh);
 
-    // Capture des pixels mandala
+    // bbox = zone exacte où le mandala est dessiné (le pot ne sort JAMAIS de là)
+    bbox = {
+      x0: fit.dx,
+      y0: fit.dy,
+      x1: fit.dx + fit.dw - 1,
+      y1: fit.dy + fit.dh - 1
+    };
+
     mandalaData = bctx.getImageData(0,0,W,H);
   };
 
@@ -248,25 +221,27 @@
     return {dx, dy, dw, dh};
   }
 
-  // --- Outils : activation ---
+  // --- UI active ---
   function setActive(btn){
     [btnBrush, btnFill, btnEraser].forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
   }
-
   btnBrush.addEventListener("click", () => { tool="brush"; setActive(btnBrush); });
-  btnFill.addEventListener("click", () => { tool="fill"; setActive(btnFill); });
-  btnEraser.addEventListener("click", () => { tool="eraser"; setActive(btnEraser); });
+  btnFill.addEventListener("click",  () => { tool="fill";  setActive(btnFill);  });
+  btnEraser.addEventListener("click",() => { tool="eraser";setActive(btnEraser);});
+
+  btnClear.addEventListener("click", () => {
+    // Efface UNIQUEMENT la couche de couleur
+    pctx.clearRect(0,0,W,H);
+  });
 
   btnPrint.addEventListener("click", () => printMerged());
 
   swatches.forEach(s => {
-    s.addEventListener("click", () => {
-      colorPicker.value = s.dataset.c;
-    });
+    s.addEventListener("click", () => colorPicker.value = s.dataset.c);
   });
 
-  // --- Coordonnées (souris + tactile) ---
+  // --- Coords ---
   function getPos(e){
     const rect = paintCanvas.getBoundingClientRect();
     const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
@@ -276,17 +251,21 @@
     return {x, y};
   }
 
-  // --- Dessin ---
+  // --- Events ---
   function start(e){
     e.preventDefault();
-    drawing = true;
     const {x,y} = getPos(e);
     lastX = x; lastY = y;
 
     if (tool === "fill"){
       doFill(Math.floor(x), Math.floor(y));
       drawing = false;
-    } else if (tool === "brush"){
+      return;
+    }
+
+    drawing = true;
+
+    if (tool === "brush"){
       pctx.beginPath();
       pctx.moveTo(lastX, lastY);
     }
@@ -306,10 +285,11 @@
       pctx.lineTo(x, y);
       pctx.stroke();
       lastX = x; lastY = y;
+      return;
     }
 
     if (tool === "eraser"){
-      // Efface UNIQUEMENT le calque paint, donc jamais le mandala
+      // gomme = efface seulement la couleur
       pctx.globalCompositeOperation = "destination-out";
       pctx.beginPath();
       pctx.arc(x, y, eraserSize, 0, Math.PI*2);
@@ -318,39 +298,53 @@
     }
   }
 
-  function end(e){
+  function end(){
     drawing = false;
     pctx.beginPath();
   }
 
-  // Écouteurs
   ["mousedown","touchstart"].forEach(evt => paintCanvas.addEventListener(evt, start, {passive:false}));
-  ["mousemove","touchmove"].forEach(evt => paintCanvas.addEventListener(evt, move, {passive:false}));
+  ["mousemove","touchmove"].forEach(evt => paintCanvas.addEventListener(evt, move,  {passive:false}));
   ["mouseup","mouseleave","touchend","touchcancel"].forEach(evt => paintCanvas.addEventListener(evt, end));
 
-  // --- POT DE PEINTURE (flood fill sur calque paint, mais avec barrières mandala) ---
+  // --- Pot de peinture : ultra sécurisé ---
+  function insideBbox(x,y){
+    return (x>=bbox.x0 && x<=bbox.x1 && y>=bbox.y0 && y<=bbox.y1);
+  }
+
   function doFill(x, y){
     if (!mandalaData) return;
+
+    // Important : si on clique hors du mandala → on ne remplit pas toute la page
+    if (!insideBbox(x,y)) return;
+
+    // si clic sur un trait → rien
+    if (isMandalaLine(x,y)) return;
 
     const img = pctx.getImageData(0,0,W,H);
     const fillColor = hexToRgba(colorPicker.value);
     const target = getPixel(img, x, y);
 
-    // si on clique sur une "barrière" (trait noir du mandala), on ne fait rien
-    if (isMandalaLine(x,y)) return;
-
-    // si déjà la même couleur
+    // si déjà même couleur
     if (colorsMatch(target, fillColor)) return;
 
     floodFill(img, x, y, target, fillColor);
     pctx.putImageData(img, 0, 0);
   }
 
+  // Barrière = soit hors bbox, soit pixel du mandala “sombre” (inclut le gris anti-alias)
+  function isBarrier(x,y){
+    if (!insideBbox(x,y)) return true;
+    return isMandalaLine(x,y);
+  }
+
   function isMandalaLine(x,y){
     const i = (y*W + x)*4;
     const r = mandalaData.data[i], g = mandalaData.data[i+1], b = mandalaData.data[i+2];
-    // "noir" = barrière : on considère ligne si sombre
-    return (r < 60 && g < 60 && b < 60);
+
+    // seuil plus haut pour attraper les bords gris (anti-alias)
+    const lum = 0.2126*r + 0.7152*g + 0.0722*b;
+    return lum < 230; // ⬅️ crucial : empêche la “fuite” du pot
   }
 
   function floodFill(img, x, y, target, fill){
@@ -365,11 +359,9 @@
       if (visited[idx]) continue;
       visited[idx] = 1;
 
-      if (isMandalaLine(cx,cy)) continue;
+      if (isBarrier(cx,cy)) continue;
 
       const cur = getPixel(img, cx, cy);
-
-      // On remplit seulement si la couleur est celle de départ
       if (!colorsMatch(cur, target)) continue;
 
       setPixel(img, cx, cy, fill);
@@ -397,20 +389,15 @@
     return [(v>>16)&255, (v>>8)&255, v&255, 255];
   }
 
-  // --- Impression : fusion mandala + peinture ---
+  // --- Impression : fusion base + peinture ---
   function printMerged(){
     const tmp = document.createElement("canvas");
     tmp.width = W; tmp.height = H;
     const tctx = tmp.getContext("2d");
 
-    // fond blanc
-    tctx.fillStyle = "#fff";
+    tctx.fillStyle="#fff";
     tctx.fillRect(0,0,W,H);
-
-    // mandala
     tctx.drawImage(baseCanvas, 0, 0);
-
-    // peinture
     tctx.drawImage(paintCanvas, 0, 0);
 
     const win = window.open("");

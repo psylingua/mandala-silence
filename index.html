@@ -1,198 +1,427 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>PsyLingua – Mandala du silence</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PsyLingua – Mandala du silence</title>
 
-<style>
-  body {
-    margin: 0;
-    padding: 0;
-    background: #ffffff;
-    font-family: Arial, sans-serif;
-    text-align: center;
-  }
+  <style>
+    :root{
+      --ui-gap: 10px;
+      --ui-btn: 42px;
+      --ui-radius: 10px;
+      --ui-border: #cfcfcf;
+    }
 
-  #toolbar {
-    margin: 10px auto;
-  }
+    body{
+      margin:0;
+      background:#fff;
+      font-family: Arial, sans-serif;
+    }
 
-  button {
-    font-size: 18px;
-    margin: 0 4px;
-    padding: 6px 10px;
-    cursor: pointer;
-  }
+    /* Conteneur global : on réduit un peu la taille affichée */
+    .wrap{
+      width: 100%;
+      max-width: 980px;          /* ⬅️ réduit vs avant */
+      margin: 0 auto;
+      padding: 10px 10px 14px;
+      box-sizing: border-box;
+      text-align:center;
+    }
 
-  canvas {
-    display: block;
-    margin: 0 auto;
-    cursor: crosshair;
-  }
-</style>
+    /* Barre d’outils */
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: var(--ui-gap);
+      flex-wrap: wrap;
+      margin: 6px auto 10px;
+      user-select:none;
+    }
+
+    .color-input{
+      width: 54px;
+      height: var(--ui-btn);
+      border: 1px solid var(--ui-border);
+      border-radius: var(--ui-radius);
+      padding: 0;
+      background: #fff;
+      cursor:pointer;
+    }
+
+    .swatches{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      padding: 6px 10px;
+      border: 1px solid var(--ui-border);
+      border-radius: var(--ui-radius);
+      background:#fff;
+    }
+
+    .swatch{
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid #bbb;
+      cursor:pointer;
+    }
+
+    .btn{
+      width: var(--ui-btn);
+      height: var(--ui-btn);
+      border: 1px solid var(--ui-border);
+      border-radius: var(--ui-radius);
+      background:#fff;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .btn.active{
+      outline: 2px solid #111;
+      outline-offset: 1px;
+    }
+    .btn svg{
+      width: 22px;
+      height: 22px;
+      display:block;
+    }
+
+    /* Zone de dessin */
+    .stage{
+      width: 100%;
+      border: 1px solid #e6e6e6;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    /* Empilement des 2 calques */
+    .canvas-stack{
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1000 / 650; /* ⬅️ taille logique (plus petite) */
+      background:#fff;
+    }
+
+    canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      touch-action: none;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="wrap">
 
-<!-- OUTILS -->
-<div id="toolbar">
-  <input type="color" id="colorPicker" value="#ff0000">
-  <button onclick="setTool('brush')" title="Pinceau / Brush">✏️</button>
-  <button onclick="setTool('fill')" title="Remplir / Fill">🪣</button>
-  <button onclick="setTool('eraser')" title="Gomme / Eraser">🧽</button>
-  <button onclick="printCanvas()" title="Imprimer / Print">🖨️</button>
-</div>
+    <!-- OUTILS -->
+    <div class="toolbar">
+      <!-- Palette principale -->
+      <input class="color-input" type="color" id="colorPicker" value="#ff3b30" title="Couleur / Color"/>
 
-<!-- CANVAS -->
-<canvas id="canvas"></canvas>
+      <!-- Pastilles rapides -->
+      <div class="swatches" title="Couleurs rapides / Quick colors">
+        <div class="swatch" data-c="#ff3b30" style="background:#ff3b30"></div>
+        <div class="swatch" data-c="#ff9500" style="background:#ff9500"></div>
+        <div class="swatch" data-c="#ffcc00" style="background:#ffcc00"></div>
+        <div class="swatch" data-c="#34c759" style="background:#34c759"></div>
+        <div class="swatch" data-c="#007aff" style="background:#007aff"></div>
+        <div class="swatch" data-c="#af52de" style="background:#af52de"></div>
+        <div class="swatch" data-c="#000000" style="background:#000000"></div>
+      </div>
+
+      <!-- Pinceau -->
+      <button class="btn active" id="btnBrush" title="Pinceau / Brush">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 21c3.5 0 6-2 6-5 0-1.1.9-2 2-2h1l9-9-3-3-9 9v1c0 1.1-.9 2-2 2-3 0-5 2.5-5 6z" fill="#111"/>
+        </svg>
+      </button>
+
+      <!-- Pot de peinture -->
+      <button class="btn" id="btnFill" title="Pot de peinture / Fill">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 3h10v6H7V3z" fill="#111"/>
+          <path d="M9 9h6l3 11H6L9 9z" fill="#111"/>
+          <circle cx="6" cy="20" r="2" fill="#111"/>
+        </svg>
+      </button>
+
+      <!-- Gomme -->
+      <button class="btn" id="btnEraser" title="Gomme / Eraser">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M16 3l5 5-10 10H6l-3-3 13-12z" fill="#111"/>
+          <path d="M6 18h15v3H6v-3z" fill="#111"/>
+        </svg>
+      </button>
+
+      <!-- Imprimer -->
+      <button class="btn" id="btnPrint" title="Imprimer / Print">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 8V3h10v5H7z" fill="#111"/>
+          <path d="M6 9h12a3 3 0 013 3v5h-4v4H7v-4H3v-5a3 3 0 013-3z" fill="#111"/>
+          <rect x="8.5" y="14.5" width="7" height="5" fill="#fff"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- SCENE -->
+    <div class="stage">
+      <div class="canvas-stack">
+        <!-- Calque 1 : mandala -->
+        <canvas id="baseCanvas"></canvas>
+        <!-- Calque 2 : coloriage (c’est celui qu’on efface / remplit) -->
+        <canvas id="paintCanvas"></canvas>
+      </div>
+    </div>
+
+  </div>
 
 <script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+(() => {
+  // --- Taille logique (un peu plus petite pour Genially) ---
+  const W = 1000;
+  const H = 650;
 
-const mandala = new Image();
-mandala.src = "mandala.png";
+  const baseCanvas = document.getElementById("baseCanvas");
+  const paintCanvas = document.getElementById("paintCanvas");
+  baseCanvas.width = paintCanvas.width = W;
+  baseCanvas.height = paintCanvas.height = H;
 
-let tool = "brush";
-let drawing = false;
-let brushSize = 6;
+  const bctx = baseCanvas.getContext("2d");
+  const pctx = paintCanvas.getContext("2d", { willReadFrequently: true });
 
-// TAILLE CANVAS (adaptée Genially)
-canvas.width = 1200;
-canvas.height = 760;
+  // UI
+  const colorPicker = document.getElementById("colorPicker");
+  const swatches = document.querySelectorAll(".swatch");
 
-mandala.onload = () => {
-  ctx.drawImage(mandala, 0, 0, canvas.width, canvas.height);
-};
+  const btnBrush = document.getElementById("btnBrush");
+  const btnFill = document.getElementById("btnFill");
+  const btnEraser = document.getElementById("btnEraser");
+  const btnPrint = document.getElementById("btnPrint");
 
-// OUTILS
-function setTool(t) {
-  tool = t;
-}
+  let tool = "brush"; // brush | fill | eraser
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+  let brushSize = 5;        // pinceau fin (nickel coloriage)
+  let eraserSize = 14;      // gomme confortable
 
-// SOURIS
-canvas.addEventListener("mousedown", e => {
-  drawing = true;
-  if (tool === "fill") fill(e);
-});
+  // --- Mandala ---
+  const mandala = new Image();
+  mandala.src = "mandala.png";
 
-canvas.addEventListener("mouseup", () => drawing = false);
-canvas.addEventListener("mouseleave", () => drawing = false);
+  // On garde une copie des pixels du mandala pour que le pot respecte les traits
+  let mandalaData = null;
 
-canvas.addEventListener("mousemove", e => {
-  if (!drawing || tool !== "brush") return;
-  draw(e);
-});
+  mandala.onload = () => {
+    // Dessine le mandala en "contain" dans le canvas de base
+    bctx.clearRect(0,0,W,H);
+    bctx.fillStyle = "#fff";
+    bctx.fillRect(0,0,W,H);
 
-// DESSIN
-function draw(e) {
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+    const {dx, dy, dw, dh} = containFit(mandala.width, mandala.height, W, H);
+    bctx.drawImage(mandala, dx, dy, dw, dh);
 
-  ctx.globalCompositeOperation = "source-over";
-  ctx.strokeStyle = document.getElementById("colorPicker").value;
-  ctx.lineWidth = brushSize;
-  ctx.lineCap = "round";
+    // Capture des pixels mandala
+    mandalaData = bctx.getImageData(0,0,W,H);
+  };
 
-  ctx.lineTo(x, y);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-}
-
-// REMPLISSAGE
-function fill(e) {
-  const rect = canvas.getBoundingClientRect();
-  const x = Math.floor(e.clientX - rect.left);
-  const y = Math.floor(e.clientY - rect.top);
-
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const targetColor = getPixel(imageData, x, y);
-  const fillColor = hexToRgba(document.getElementById("colorPicker").value);
-
-  if (colorsMatch(targetColor, fillColor)) return;
-
-  floodFill(imageData, x, y, targetColor, fillColor);
-  ctx.putImageData(imageData, 0, 0);
-}
-
-// GOMME (N’efface PAS le mandala)
-canvas.addEventListener("mousedown", e => {
-  if (tool !== "eraser") return;
-  drawing = true;
-});
-
-canvas.addEventListener("mousemove", e => {
-  if (!drawing || tool !== "eraser") return;
-
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.beginPath();
-  ctx.arc(x, y, 8, 0, Math.PI * 2);
-  ctx.fill();
-});
-
-canvas.addEventListener("mouseup", () => {
-  ctx.globalCompositeOperation = "source-over";
-});
-
-// IMPRIMER
-function printCanvas() {
-  const win = window.open();
-  win.document.write("<img src='" + canvas.toDataURL() + "'/>");
-  win.document.close();
-  win.focus();
-  win.print();
-  win.close();
-}
-
-// UTILITAIRES
-function getPixel(img, x, y) {
-  const i = (y * img.width + x) * 4;
-  return [img.data[i], img.data[i+1], img.data[i+2], img.data[i+3]];
-}
-
-function setPixel(img, x, y, color) {
-  const i = (y * img.width + x) * 4;
-  img.data[i] = color[0];
-  img.data[i+1] = color[1];
-  img.data[i+2] = color[2];
-  img.data[i+3] = 255;
-}
-
-function colorsMatch(a, b) {
-  return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
-}
-
-function hexToRgba(hex) {
-  const bigint = parseInt(hex.slice(1), 16);
-  return [
-    (bigint >> 16) & 255,
-    (bigint >> 8) & 255,
-    bigint & 255,
-    255
-  ];
-}
-
-function floodFill(img, x, y, target, fill) {
-  const stack = [[x, y]];
-
-  while (stack.length) {
-    const [cx, cy] = stack.pop();
-    if (cx < 0 || cy < 0 || cx >= img.width || cy >= img.height) continue;
-
-    const current = getPixel(img, cx, cy);
-    if (!colorsMatch(current, target)) continue;
-
-    setPixel(img, cx, cy, fill);
-    stack.push([cx+1, cy], [cx-1, cy], [cx, cy+1], [cx, cy-1]);
+  function containFit(imgW, imgH, boxW, boxH){
+    const rImg = imgW / imgH;
+    const rBox = boxW / boxH;
+    let dw, dh, dx, dy;
+    if (rImg > rBox){
+      dw = boxW;
+      dh = Math.round(boxW / rImg);
+      dx = 0;
+      dy = Math.round((boxH - dh)/2);
+    } else {
+      dh = boxH;
+      dw = Math.round(boxH * rImg);
+      dy = 0;
+      dx = Math.round((boxW - dw)/2);
+    }
+    return {dx, dy, dw, dh};
   }
-}
-</script>
 
+  // --- Outils : activation ---
+  function setActive(btn){
+    [btnBrush, btnFill, btnEraser].forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+
+  btnBrush.addEventListener("click", () => { tool="brush"; setActive(btnBrush); });
+  btnFill.addEventListener("click", () => { tool="fill"; setActive(btnFill); });
+  btnEraser.addEventListener("click", () => { tool="eraser"; setActive(btnEraser); });
+
+  btnPrint.addEventListener("click", () => printMerged());
+
+  swatches.forEach(s => {
+    s.addEventListener("click", () => {
+      colorPicker.value = s.dataset.c;
+    });
+  });
+
+  // --- Coordonnées (souris + tactile) ---
+  function getPos(e){
+    const rect = paintCanvas.getBoundingClientRect();
+    const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+    const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+    const x = (clientX - rect.left) * (W / rect.width);
+    const y = (clientY - rect.top) * (H / rect.height);
+    return {x, y};
+  }
+
+  // --- Dessin ---
+  function start(e){
+    e.preventDefault();
+    drawing = true;
+    const {x,y} = getPos(e);
+    lastX = x; lastY = y;
+
+    if (tool === "fill"){
+      doFill(Math.floor(x), Math.floor(y));
+      drawing = false;
+    } else if (tool === "brush"){
+      pctx.beginPath();
+      pctx.moveTo(lastX, lastY);
+    }
+  }
+
+  function move(e){
+    if (!drawing) return;
+    e.preventDefault();
+    const {x,y} = getPos(e);
+
+    if (tool === "brush"){
+      pctx.globalCompositeOperation = "source-over";
+      pctx.strokeStyle = colorPicker.value;
+      pctx.lineWidth = brushSize;
+      pctx.lineCap = "round";
+      pctx.lineJoin = "round";
+      pctx.lineTo(x, y);
+      pctx.stroke();
+      lastX = x; lastY = y;
+    }
+
+    if (tool === "eraser"){
+      // Efface UNIQUEMENT le calque paint, donc jamais le mandala
+      pctx.globalCompositeOperation = "destination-out";
+      pctx.beginPath();
+      pctx.arc(x, y, eraserSize, 0, Math.PI*2);
+      pctx.fill();
+      pctx.globalCompositeOperation = "source-over";
+    }
+  }
+
+  function end(e){
+    drawing = false;
+    pctx.beginPath();
+  }
+
+  // Écouteurs
+  ["mousedown","touchstart"].forEach(evt => paintCanvas.addEventListener(evt, start, {passive:false}));
+  ["mousemove","touchmove"].forEach(evt => paintCanvas.addEventListener(evt, move, {passive:false}));
+  ["mouseup","mouseleave","touchend","touchcancel"].forEach(evt => paintCanvas.addEventListener(evt, end));
+
+  // --- POT DE PEINTURE (flood fill sur calque paint, mais avec barrières mandala) ---
+  function doFill(x, y){
+    if (!mandalaData) return;
+
+    const img = pctx.getImageData(0,0,W,H);
+    const fillColor = hexToRgba(colorPicker.value);
+    const target = getPixel(img, x, y);
+
+    // si on clique sur une "barrière" (trait noir du mandala), on ne fait rien
+    if (isMandalaLine(x,y)) return;
+
+    // si déjà la même couleur
+    if (colorsMatch(target, fillColor)) return;
+
+    floodFill(img, x, y, target, fillColor);
+    pctx.putImageData(img, 0, 0);
+  }
+
+  function isMandalaLine(x,y){
+    const i = (y*W + x)*4;
+    const r = mandalaData.data[i], g = mandalaData.data[i+1], b = mandalaData.data[i+2];
+    // "noir" = barrière : on considère ligne si sombre
+    return (r < 60 && g < 60 && b < 60);
+  }
+
+  function floodFill(img, x, y, target, fill){
+    const stack = [[x,y]];
+    const visited = new Uint8Array(W*H);
+
+    while(stack.length){
+      const [cx, cy] = stack.pop();
+      if (cx<0 || cy<0 || cx>=W || cy>=H) continue;
+
+      const idx = cy*W + cx;
+      if (visited[idx]) continue;
+      visited[idx] = 1;
+
+      if (isMandalaLine(cx,cy)) continue;
+
+      const cur = getPixel(img, cx, cy);
+
+      // On remplit seulement si la couleur est celle de départ
+      if (!colorsMatch(cur, target)) continue;
+
+      setPixel(img, cx, cy, fill);
+
+      stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+    }
+  }
+
+  function getPixel(img, x, y){
+    const i = (y*W + x)*4;
+    return [img.data[i], img.data[i+1], img.data[i+2], img.data[i+3]];
+  }
+  function setPixel(img, x, y, c){
+    const i = (y*W + x)*4;
+    img.data[i]   = c[0];
+    img.data[i+1] = c[1];
+    img.data[i+2] = c[2];
+    img.data[i+3] = 255;
+  }
+  function colorsMatch(a,b){
+    return a[0]===b[0] && a[1]===b[1] && a[2]===b[2] && a[3]===b[3];
+  }
+  function hexToRgba(hex){
+    const v = parseInt(hex.slice(1),16);
+    return [(v>>16)&255, (v>>8)&255, v&255, 255];
+  }
+
+  // --- Impression : fusion mandala + peinture ---
+  function printMerged(){
+    const tmp = document.createElement("canvas");
+    tmp.width = W; tmp.height = H;
+    const tctx = tmp.getContext("2d");
+
+    // fond blanc
+    tctx.fillStyle = "#fff";
+    tctx.fillRect(0,0,W,H);
+
+    // mandala
+    tctx.drawImage(baseCanvas, 0, 0);
+
+    // peinture
+    tctx.drawImage(paintCanvas, 0, 0);
+
+    const win = window.open("");
+    win.document.write("<img style='max-width:100%;height:auto' src='"+ tmp.toDataURL("image/png") +"'/>");
+    win.document.close();
+    win.focus();
+    win.print();
+    win.close();
+  }
+
+})();
+</script>
 </body>
 </html>

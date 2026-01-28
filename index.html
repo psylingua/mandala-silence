@@ -1,271 +1,198 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mandala – PsyLingua</title>
+<meta charset="UTF-8">
+<title>PsyLingua – Mandala du silence</title>
 
-  <style>
-    body{
-      margin:0;
-      padding:12px;
-      background:#fff;
-      font-family: Arial, sans-serif;
-      text-align:center;
-    }
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
 
-    #toolbar{
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      gap:10px;
-      margin-bottom:10px;
-      flex-wrap:wrap;
-    }
+  #toolbar {
+    margin: 10px auto;
+  }
 
-    button{
-      font-size:22px;
-      padding:6px 10px;
-      cursor:pointer;
-      background:none;
-      border:none;
-      border-radius:8px;
-    }
-    button:hover{ background:#f2f2f2; }
-    button.active{ outline:2px solid #333; }
+  button {
+    font-size: 18px;
+    margin: 0 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
 
-    input[type=color]{
-      width:40px;
-      height:40px;
-      border:none;
-      padding:0;
-      background:none;
-      cursor:pointer;
-    }
-
-    /* Conteneur “élastique” */
-    #container{
-      position:relative;
-      display:inline-block;
-      background:#fff;
-      margin: 0 auto;
-    }
-
-    /* Les canvas seront redimensionnés en JS via style.width/height */
-    canvas{
-      display:block;
-      touch-action:none;
-    }
-
-    #mandalaCanvas{ position:relative; z-index:1; }
-    #drawCanvas{
-      position:absolute;
-      left:0; top:0;
-      z-index:2;
-    }
-  </style>
+  canvas {
+    display: block;
+    margin: 0 auto;
+    cursor: crosshair;
+  }
+</style>
 </head>
 
 <body>
 
-  <div id="toolbar">
-    <input type="color" id="colorPicker" value="#ff0000"
-      title="Choisir une couleur&#10;Elegir un color&#10;Choose a color" />
+<!-- OUTILS -->
+<div id="toolbar">
+  <input type="color" id="colorPicker" value="#ff0000">
+  <button onclick="setTool('brush')" title="Pinceau / Brush">✏️</button>
+  <button onclick="setTool('fill')" title="Remplir / Fill">🪣</button>
+  <button onclick="setTool('eraser')" title="Gomme / Eraser">🧽</button>
+  <button onclick="printCanvas()" title="Imprimer / Print">🖨️</button>
+</div>
 
-    <button id="toolBrush" class="active"
-      title="Pinceau&#10;Pincel&#10;Brush">✏️</button>
+<!-- CANVAS -->
+<canvas id="canvas"></canvas>
 
-    <button id="toolBucket"
-      title="Pot de peinture&#10;Cubo de pintura&#10;Paint bucket">🎨</button>
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-    <button id="toolEraser"
-      title="Gomme&#10;Borrador&#10;Eraser">🧽</button>
+const mandala = new Image();
+mandala.src = "mandala.png";
 
-    <button id="clearAll"
-      title="Tout effacer&#10;Borrar todo&#10;Clear all">🧹</button>
+let tool = "brush";
+let drawing = false;
+let brushSize = 6;
 
-    <button onclick="window.print()"
-      title="Imprimer&#10;Imprimir&#10;Print">🖨️</button>
-  </div>
+// TAILLE CANVAS (adaptée Genially)
+canvas.width = 1200;
+canvas.height = 760;
 
-  <div id="container">
-    <canvas id="mandalaCanvas"></canvas>
-    <canvas id="drawCanvas"></canvas>
-  </div>
+mandala.onload = () => {
+  ctx.drawImage(mandala, 0, 0, canvas.width, canvas.height);
+};
 
-  <script>
-    const container = document.getElementById("container");
-    const toolbar = document.getElementById("toolbar");
+// OUTILS
+function setTool(t) {
+  tool = t;
+}
 
-    const mandalaCanvas = document.getElementById("mandalaCanvas");
-    const drawCanvas = document.getElementById("drawCanvas");
-    const mandalaCtx = mandalaCanvas.getContext("2d");
-    const drawCtx = drawCanvas.getContext("2d");
+// SOURIS
+canvas.addEventListener("mousedown", e => {
+  drawing = true;
+  if (tool === "fill") fill(e);
+});
 
-    const colorPicker = document.getElementById("colorPicker");
-    const btnBrush  = document.getElementById("toolBrush");
-    const btnBucket = document.getElementById("toolBucket");
-    const btnEraser = document.getElementById("toolEraser");
-    const btnClear  = document.getElementById("clearAll");
+canvas.addEventListener("mouseup", () => drawing = false);
+canvas.addEventListener("mouseleave", () => drawing = false);
 
-    const img = new Image();
-    img.src = "mandala.png";
+canvas.addEventListener("mousemove", e => {
+  if (!drawing || tool !== "brush") return;
+  draw(e);
+});
 
-    let tool = "brush";
-    let drawing = false;
-    let color = colorPicker.value;
+// DESSIN
+function draw(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
 
-    let brushSize = 3;
-    let eraserSize = 10;
+  ctx.globalCompositeOperation = "source-over";
+  ctx.strokeStyle = document.getElementById("colorPicker").value;
+  ctx.lineWidth = brushSize;
+  ctx.lineCap = "round";
 
-    // Redimensionnement d’affichage (sans toucher à la résolution interne)
-    function fitToWindow(){
-      if(!img.naturalWidth) return;
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+}
 
-      const maxW = Math.min(900, window.innerWidth - 24); // 900 max, sinon largeur écran
-      const maxH = Math.max(300, window.innerHeight - toolbar.offsetHeight - 36); // hauteur dispo
+// REMPLISSAGE
+function fill(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor(e.clientX - rect.left);
+  const y = Math.floor(e.clientY - rect.top);
 
-      const scale = Math.min(maxW / img.width, maxH / img.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const targetColor = getPixel(imageData, x, y);
+  const fillColor = hexToRgba(document.getElementById("colorPicker").value);
 
-      const displayW = Math.floor(img.width * scale);
-      const displayH = Math.floor(img.height * scale);
+  if (colorsMatch(targetColor, fillColor)) return;
 
-      container.style.width = displayW + "px";
-      container.style.height = displayH + "px";
+  floodFill(imageData, x, y, targetColor, fillColor);
+  ctx.putImageData(imageData, 0, 0);
+}
 
-      mandalaCanvas.style.width = drawCanvas.style.width = displayW + "px";
-      mandalaCanvas.style.height = drawCanvas.style.height = displayH + "px";
-    }
+// GOMME (N’efface PAS le mandala)
+canvas.addEventListener("mousedown", e => {
+  if (tool !== "eraser") return;
+  drawing = true;
+});
 
-    img.onload = () => {
-      // Résolution interne = fichier original (meilleure qualité pour pot + traits)
-      mandalaCanvas.width = drawCanvas.width = img.width;
-      mandalaCanvas.height = drawCanvas.height = img.height;
+canvas.addEventListener("mousemove", e => {
+  if (!drawing || tool !== "eraser") return;
 
-      mandalaCtx.drawImage(img, 0, 0);
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
 
-      fitToWindow();
-    };
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath();
+  ctx.arc(x, y, 8, 0, Math.PI * 2);
+  ctx.fill();
+});
 
-    window.addEventListener("resize", fitToWindow);
+canvas.addEventListener("mouseup", () => {
+  ctx.globalCompositeOperation = "source-over";
+});
 
-    function setActiveButton(){
-      [btnBrush, btnBucket, btnEraser].forEach(b => b.classList.remove("active"));
-      if(tool === "brush") btnBrush.classList.add("active");
-      if(tool === "bucket") btnBucket.classList.add("active");
-      if(tool === "eraser") btnEraser.classList.add("active");
-    }
+// IMPRIMER
+function printCanvas() {
+  const win = window.open();
+  win.document.write("<img src='" + canvas.toDataURL() + "'/>");
+  win.document.close();
+  win.focus();
+  win.print();
+  win.close();
+}
 
-    function getPos(e){
-      const rect = drawCanvas.getBoundingClientRect();
-      return {
-        x: Math.floor((e.clientX - rect.left) * (drawCanvas.width / rect.width)),
-        y: Math.floor((e.clientY - rect.top) * (drawCanvas.height / rect.height))
-      };
-    }
+// UTILITAIRES
+function getPixel(img, x, y) {
+  const i = (y * img.width + x) * 4;
+  return [img.data[i], img.data[i+1], img.data[i+2], img.data[i+3]];
+}
 
-    colorPicker.addEventListener("change", e => color = e.target.value);
+function setPixel(img, x, y, color) {
+  const i = (y * img.width + x) * 4;
+  img.data[i] = color[0];
+  img.data[i+1] = color[1];
+  img.data[i+2] = color[2];
+  img.data[i+3] = 255;
+}
 
-    btnBrush.onclick = () => { tool = "brush"; setActiveButton(); };
-    btnBucket.onclick = () => { tool = "bucket"; setActiveButton(); };
-    btnEraser.onclick = () => { tool = "eraser"; setActiveButton(); };
+function colorsMatch(a, b) {
+  return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+}
 
-    btnClear.onclick = () => drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+function hexToRgba(hex) {
+  const bigint = parseInt(hex.slice(1), 16);
+  return [
+    (bigint >> 16) & 255,
+    (bigint >> 8) & 255,
+    bigint & 255,
+    255
+  ];
+}
 
-    function dab(x, y){
-      const size = (tool === "eraser") ? eraserSize : brushSize;
+function floodFill(img, x, y, target, fill) {
+  const stack = [[x, y]];
 
-      drawCtx.save();
-      drawCtx.globalCompositeOperation =
-        (tool === "eraser") ? "destination-out" : "source-over";
+  while (stack.length) {
+    const [cx, cy] = stack.pop();
+    if (cx < 0 || cy < 0 || cx >= img.width || cy >= img.height) continue;
 
-      drawCtx.fillStyle = color;
-      drawCtx.beginPath();
-      drawCtx.arc(x, y, size, 0, Math.PI * 2);
-      drawCtx.fill();
-      drawCtx.restore();
-    }
+    const current = getPixel(img, cx, cy);
+    if (!colorsMatch(current, target)) continue;
 
-    function hexToRgba(hex){
-      const h = hex.replace("#", "");
-      const bigint = parseInt(h, 16);
-      return { r:(bigint>>16)&255, g:(bigint>>8)&255, b:bigint&255, a:255 };
-    }
-
-    function floodFill(startX, startY, fillHex){
-      const w = drawCanvas.width;
-      const h = drawCanvas.height;
-
-      const drawImage = drawCtx.getImageData(0, 0, w, h);
-      const drawData = drawImage.data;
-
-      const temp = document.createElement("canvas");
-      temp.width = w; temp.height = h;
-      const tctx = temp.getContext("2d");
-      tctx.drawImage(mandalaCanvas, 0, 0);
-      tctx.drawImage(drawCanvas, 0, 0);
-      const visible = tctx.getImageData(0, 0, w, h).data;
-
-      const idx0 = (startY * w + startX) * 4;
-      const target = { r:visible[idx0], g:visible[idx0+1], b:visible[idx0+2] };
-      const fill = hexToRgba(fillHex);
-
-      const tol = 18;
-      function closeTo(c){
-        return (
-          Math.abs(c.r - target.r) <= tol &&
-          Math.abs(c.g - target.g) <= tol &&
-          Math.abs(c.b - target.b) <= tol
-        );
-      }
-
-      const stack = [[startX, startY]];
-      const visited = new Uint8Array(w*h);
-
-      while(stack.length){
-        const [x,y] = stack.pop();
-        if(x<0||x>=w||y<0||y>=h) continue;
-
-        const p = y*w+x;
-        if(visited[p]) continue;
-        visited[p]=1;
-
-        const i = p*4;
-        const c = { r:visible[i], g:visible[i+1], b:visible[i+2] };
-        if(!closeTo(c)) continue;
-
-        drawData[i]=fill.r; drawData[i+1]=fill.g; drawData[i+2]=fill.b; drawData[i+3]=255;
-
-        stack.push([x+1,y]); stack.push([x-1,y]); stack.push([x,y+1]); stack.push([x,y-1]);
-      }
-
-      drawCtx.putImageData(drawImage, 0, 0);
-    }
-
-    drawCanvas.addEventListener("pointerdown", e => {
-      const {x,y} = getPos(e);
-
-      if(tool === "bucket"){
-        floodFill(x, y, color);
-        return;
-      }
-
-      drawing = true;
-      drawCanvas.setPointerCapture(e.pointerId);
-      dab(x, y);
-    });
-
-    drawCanvas.addEventListener("pointerup", () => drawing = false);
-    drawCanvas.addEventListener("pointerleave", () => drawing = false);
-
-    drawCanvas.addEventListener("pointermove", e => {
-      if(!drawing) return;
-      const {x,y} = getPos(e);
-      dab(x, y);
-    });
-
-    setActiveButton();
-  </script>
+    setPixel(img, cx, cy, fill);
+    stack.push([cx+1, cy], [cx-1, cy], [cx, cy+1], [cx, cy-1]);
+  }
+}
+</script>
 
 </body>
 </html>
